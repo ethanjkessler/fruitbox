@@ -170,14 +170,14 @@ void solveDiagonalRecursive(int** grid, Match** matches, int count, int score) {
                     }
                 }
             }
-            // base case
-            // update best if better
-            if (score > solution_score) {
-                solution_score = score;
-                solution_count = count;
-                memcpy(solution, *matches, sizeof(Match) * 100);
-            }
         }
+    }
+    // base case
+    // update best if better
+    if (score > solution_score) {
+        solution_score = score;
+        solution_count = count;
+        memcpy(solution, *matches, sizeof(Match) * 100);
     }
 }
 
