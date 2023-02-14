@@ -108,7 +108,7 @@ void solveDiagonal(int** grid, Match** matches, int* count, int* score, int dest
                         if (destructive) {
                             zeroRect(grid, start, end);
                         }
-                        (*matches)[(*count)] = {start, end};
+                        (*matches)[(*count)] = (Match){start, end};
                         (*count)++;
                     }
                 }
@@ -137,7 +137,7 @@ long computeGridHash(int** grid) {
     return hash;
 }
 
-void solveDiagonalRecursive(int** grid, Match** matches, int* count, int* score, int destructive) {
+void solveDiagonalRecursive(int** grid, Match** matches, int count, int score) {
     long gridHash = computeGridHash(grid);
     if (seen_set.find(gridHash) != seen_set.end()) {
         return;
@@ -153,36 +153,29 @@ void solveDiagonalRecursive(int** grid, Match** matches, int* count, int* score,
                     Point start = {j, i};
                     Point end = {x, y};
                     if (sumRect(grid, start, end) == 10) {
-                        evaluations++;
                         if (evaluations > MAX_EVALS) {
                            break;
                         }
+                        evaluations++;
                         // choose
-                        int currentScore = *score;
                         int** copy = copyGrid(grid);
-                        *score = (*score) + countNonZero(grid, start, end);
-                        if (destructive) {
-                            zeroRect(copy, start, end);
-                        }
-                        (*matches)[(*count)] = {start, end};
-                        (*count)++;
+                        zeroRect(copy, start, end);
+                        (*matches)[count] = (Match){start, end};
 
                         // explore
-                        solveDiagonalRecursive(copy, matches, count, score, destructive);
-
-                        // update best if better
-                        if (*score > solution_score) {
-                            solution_score = *score;
-                            solution_count = *count;
-                            memcpy(solution, *matches, sizeof(Match) * 100);
-                        }
+                        solveDiagonalRecursive(copy, matches, count + 1, score + countNonZero(grid, start, end));
 
                         // unchoose
-                        *score = currentScore;
-                        (*count)--;
                         freeGrid(copy);
                     }
                 }
+            }
+            // base case
+            // update best if better
+            if (score > solution_score) {
+                solution_score = score;
+                solution_count = count;
+                memcpy(solution, *matches, sizeof(Match) * 100);
             }
         }
     }
@@ -206,13 +199,10 @@ void writeSolution(Match* matches, int count, int score, int evaluations) {
 int main() {
     int** grid = readGrid();
     Match* matches = (Match*) malloc(sizeof(Match) * 100);
-    int count = 0;
-    int score = 0;
     //generateDiagonals(grid, &matches, &count, &score);
-    solveDiagonalRecursive(grid, &matches, &count, &score, 1);
-    printf("Score: %d\n", score);
-    printf("Count: %d\n", count);
-    //writeSolution(matches, count, score);
+    solveDiagonalRecursive(grid, &matches, 0, 0);
+    printf("Score: %d\n", solution_score);
+    printf("Count: %d\n", solution_count);
     writeSolution(solution, solution_count, solution_score, evaluations);
     freeGrid(grid);
 }
